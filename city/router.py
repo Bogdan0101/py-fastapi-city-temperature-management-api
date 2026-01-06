@@ -1,5 +1,3 @@
-import time
-
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from dependencies import get_db
@@ -29,7 +27,7 @@ async def get_city(city_id: int, db: AsyncSession = Depends(get_db)):
     return db_city
 
 
-@router.post("/cities/", response_model=schemas.CityCreate)
+@router.post("/cities/", response_model=schemas.CityList)
 async def create_city(city: schemas.CityCreate, db: AsyncSession = Depends(get_db)):
     db_city = await crud.get_city_by_name(db=db, name=city.name)
     if db_city:
@@ -75,23 +73,16 @@ async def delete_city(
 @router.get("/temperatures/", response_model=list[schemas.TemperatureList])
 async def get_temperatures(
         db: AsyncSession = Depends(get_db),
+        city_id: int | None = Query(default=None, ge=1),
         skip: int = Query(0, ge=0),
         limit: int = Query(100, ge=1, le=100),
 ):
+    if city_id is not None:
+        db_city = await crud.get_city_by_id(db=db, city_id=city_id)
+        if not db_city:
+            raise HTTPException(status_code=404, detail="City not found")
+        return await crud.get_temperatures_for_city_by_id(db=db, skip=skip, limit=limit, city_id=city_id)
     return await crud.get_temperature_list(db=db, skip=skip, limit=limit)
-
-
-@router.get("/temperatures/{city_id}/", response_model=list[schemas.TemperatureList])
-async def get_temperatures_by_city_id(
-        city_id: int,
-        db: AsyncSession = Depends(get_db),
-        skip: int = Query(0, ge=0),
-        limit: int = Query(100, ge=1, le=100),
-):
-    db_city = await crud.get_city_by_id(db=db, city_id=city_id)
-    if not db_city:
-        raise HTTPException(status_code=404, detail="City not found")
-    return await crud.get_temperatures_for_city_by_id(db=db, skip=skip, limit=limit, city_id=city_id)
 
 
 @router.post("/temperatures/update/")

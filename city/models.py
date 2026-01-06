@@ -26,7 +26,7 @@ class Temperature(Base):
         ForeignKey("city.id"),
         index=True
     )
-    date_time = Column(DateTime, default=datetime.datetime.now())
+    date_time = Column(DateTime, default=datetime.datetime.now)
     temperature = Column(Float)
 
     city = relationship("City", back_populates="temperature")

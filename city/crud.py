@@ -22,10 +22,7 @@ async def get_city_by_name(db: AsyncSession, name: str) -> models.City | None:
 
 
 async def get_city_by_id(db: AsyncSession, city_id: int) -> models.City | None:
-    stmt = await db.scalars(
-        select(models.City).where(models.City.id == city_id)
-    )
-    return stmt.first()
+    return await db.get(models.City, city_id)
 
 
 async def post_city(
